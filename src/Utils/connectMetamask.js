@@ -1,20 +1,32 @@
+// src/utils/wallet.js or wherever you keep it
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 
 export const connectMetamask = async () => {
+  if (!window.ethereum || !window.ethereum.isMetaMask) {
+    toast.error("No MetaMask detected. Please install MetaMask to continue.");
+    return null;
+  }
 
   try {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
-    return { signer: signer, provider: provider };
+    return { signer, provider };
   } catch (error) {
-    console.log("error", error);
+    console.error("MetaMask connection error:", error);
+    toast.error("Failed to connect MetaMask.");
+    return null;
   }
 };
 
 export const checkIfWalletIsConnect = async (setAccount) => {
-  try {
+  if (!window.ethereum || !window.ethereum.isMetaMask) {
+    toast.error("MetaMask not detected.");
+    return;
+  }
 
+  try {
     const accounts = await window.ethereum.request({
       method: "eth_accounts",
     });
@@ -22,9 +34,10 @@ export const checkIfWalletIsConnect = async (setAccount) => {
     if (accounts.length) {
       setAccount(accounts[0]);
     } else {
-      console.log("No accounts found");
+      console.log("No MetaMask accounts found");
     }
   } catch (error) {
-    console.log(error);
+    console.error("Error checking wallet connection:", error);
+    toast.error("Unable to check wallet connection.");
   }
 };
